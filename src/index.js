@@ -15,15 +15,17 @@ const publicDirectoryPath = path.join(__dirname, '../public')
 
 app.use(express.static(publicDirectoryPath))
 
-let welcomeMessage = "Welcome!"
-
 io.on('connection', (socket) => {
     console.log('New WebSocket connection')
 
-    socket.emit('message', generateMessage(welcomeMessage))
-    socket.broadcast.emit('message', generateMessage('A new user has joined!'))
+    socket.on('join', ({username, room}) => {
+        socket.join(room)
+        
+        
+        socket.emit('message', generateMessage("Welcome!"))
+        socket.broadcast.to(room).emit('message', generateMessage(`${username} has joined!`))
+    })
 
-  
     socket.on('sendMessage', (message, callback) => {
         const filter = new Filter()
 
@@ -31,17 +33,17 @@ io.on('connection', (socket) => {
             return callback('Profanity is not allowed!')
         }
 
-        io.emit('message', generateMessage(message))
+        io.to('Dan').emit('message', generateMessage(message))
         callback()
     })
 
   socket.on('sendLocation', (coords, callback) => {
-        io.emit('locationMessage', generateLocationMessage(`https://google.com/maps?q=${coords.latitude},${coords.longitude}`))
+        io.to('Dan').emit('locationMessage', generateLocationMessage(`https://google.com/maps?q=${coords.latitude},${coords.longitude}`))
         callback()
     })
 
     socket.on('disconnect', () => {
-        io.emit('message', generateMessage('A user has left!'))    
+        io.to('Dan').emit('message', generateMessage('A user has left!'))    
     })
 })
 
